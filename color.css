@@ -1,0 +1,142 @@
+.creator {
+    color: #3498db;  /* 改为蓝色 */
+    font-size: 1.1rem;
+    font-weight: bold;  /* 加粗 */
+    margin-top: -8px;
+    margin-bottom: 20px;
+}
+body {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #333;
+}
+h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+.stat-box {
+    background-color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width: 100px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.stat-box:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+}
+.flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    box-sizing: border-box;
+    background-color: white;
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+    background-color: #f8f9fa;
+}
+
+
+
+.pronunciation {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+.example {
+    font-size: 1rem;
+    color: #34495e;
+    font-style: italic;
+    text-align: center;
+    line-height: 1.5;
+    padding: 15px;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    width: 90%;
+}
+
+.example::before {
+    content: "例句: ";
+    font-weight: bold;
+    color: #3498db;
+}
+.star-btn {
+    background-color: #f1c40f;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+.star-btn.starred {
+    background-color: #e67e22;
+}
+
+.reset-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #e74c3c;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.reset-btn:hover {
+    background-color: #c0392b;
+}
+.letter-line::after {
+    content: attr(data-letter);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    color: #2c3e50;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.correct {
+    color: #27ae60;
+}
+
+.incorrect {
+    color: #e74c3c;
+}
+.letter-line {
+    width: 35px;
+    height: 3px;
+    background-color: #3498db;
+    margin: 0 5px 30px;
+    position: relative;
+}
+

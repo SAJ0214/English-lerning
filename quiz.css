@@ -1,0 +1,62 @@
+.quiz-container, .spelling-container {
+    display: none;
+    width: 90%;
+    max-width: 600px;
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    text-align: center;
+}
+
+.quiz-prompt, .spelling-prompt {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.quiz-hint, .spelling-hint {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.quiz-option {
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quiz-option:hover {
+    background-color: #e9ecef;
+}
+
+.quiz-option.correct {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.quiz-option.incorrect {
+    background-color: #e74c3c;
+    color: white;
+}
+.quiz-feedback, .spelling-feedback {
+    font-size: 1.1rem;
+    margin-top: 20px;
+    min-height: 30px;
+}
+.quiz-progress, .spelling-progress {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
