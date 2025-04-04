@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+    <script>LA.init({id:"3LlEqJDMpNtyfyv7",ck:"3LlEqJDMpNtyfyv7",autoTrack:true})</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高二14班的增补词</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="button.css">
+    <link rel="stylesheet" href="andro.css">
+    <link rel="stylesheet" href="color.css">
+    <link rel="stylesheet" href="modal.css">
+    <link rel="stylesheet" href="progress.css">
+    <link rel="stylesheet" href="quiz.css">
+    <link rel="stylesheet" href="tab.css">
+    <link rel="stylesheet" href="word.css">
+</head>
+<body>
+    <div class="header">
+        <h1>高二14班的增补词</h1>
+        <p class="creator">由小宋同学制作</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="stats">
+            <div class="stat-box" id="totalWordsBtn">总单词</div>
+            <div class="stat-box" id="learnedWordsBtn">已学习</div>
+            <div class="stat-box" id="unlearnedWordsBtn">未学习</div>
+            <div class="stat-box" id="starredWordsBtn">收藏</div>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="flashcard">学习卡片</div>
+        <div class="tab" data-tab="quiz">选择题</div>
+        <div class="tab" data-tab="spelling">拼写练习</div>
+    </div>
+    
+    <div id="flashcard-tab">
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-front">
+                    <div class="word" id="wordFront"></div>
+                    <div class="pronunciation" id="pronunciation"></div>
+                    <div class="hint">点击卡片查看释义</div>
+                </div>
+                <div class="flashcard-back">
+                    <button class="reset-btn" id="resetBtn">↺</button>
+                    <div class="word" id="wordBack"></div>
+                    <div class="meaning" id="meaning"></div>
+                    <div class="example" id="example"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="star-btn" id="starBtn">★</button>
+            <button id="prevBtn">上一个</button>
+            <button id="nextBtn">下一个</button>
+            <button id="resetAllBtn" style="background-color: #e74c3c;">重置全部</button>
+        </div>
+    </div>
+    
+    <div class="quiz-container" id="quiz-tab">
+        <div class="quiz-prompt" id="quizPrompt"></div>
+        <div class="quiz-hint" id="quizHint"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <div class="quiz-progress" id="quizProgress"></div>
+    </div>
+    
+    <div class="spelling-container" id="spelling-tab">
+        <div class="spelling-prompt" id="spellingPrompt"></div>
+        <div class="spelling-hint" id="spellingHint"></div>
+        <div class="spelling-lines" id="spellingLines"></div>
+        <div class="spelling-feedback" id="spellingFeedback"></div>
+        <div class="spelling-progress" id="spellingProgress"></div>
+    </div>
+    
+    <div class="word-list" id="wordlist-tab">
+        <h2 id="wordlistTitle">单词列表</h2>
+        <div class="word-list-items" id="wordListItems"></div>
+    </div>
+    
+    <div class="modal" id="quizModal">
+        <div class="modal-content">
+            <h2>选择题练习</h2>
+            <p>是否要进行选择题练习？</p>
+            <div class="modal-buttons">
+                <button id="startQuiz">开始练习</button>
+                <button id="skipQuiz">稍后再说</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="spellingModal">
+        <div class="modal-content">
+            <h2>拼写练习</h2>
+            <p>准备好测试你的拼写能力了吗？</p>  <!-- 修改提示文本 -->
+            <div class="modal-buttons">
+                <button id="startSpelling">开始练习</button>
+                <button id="skipSpelling">稍后再说</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="resultsModal">
+        <div class="modal-content">
+            <h2>练习结果</h2>
+            <p id="resultsMessage"></p>
+            <div id="missedWordsContainer" style="margin-top: 20px;"></div>
+            <div class="modal-buttons">
+                <button id="reviewMissed">复习错词</button>
+                <button id="returnToCards">返回卡片</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./data.js"></script>
+    <script src="./word.js"></script>
+    
+    <script>
+        // 检测是否为移动设备
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // 为每个单词添加音标
+        wordData.forEach(item => {
+            item.pronunciation = pronunciationData[item.word.toLowerCase()] || "/音标未提供/";
+        });
+
+        // 应用状态
+        let state = {
+            currentIndex: 0,
+            starredWords: JSON.parse(localStorage.getItem('starredWords')) || [],
+            learnedWords: JSON.parse(localStorage.getItem('learnedWords')) || [],
+            spellingMode: false,
+            quizMode: false,
+            spellingWords: [],
+            quizWords: [],
+            currentSpellingIndex: 0,
+            currentQuizIndex: 0,
+            spellingInput: [],
+            quizOptions: [],
+            missedSpellingWords: [],
+            missedQuizWords: [],
+            showWordList: false,
+            history: [],
+            historyIndex: -1,
+            currentWordListType: 'all' ,// all, learned, unlearned, starred
+            showingCorrectSpelling: false
+        };
+
+        // DOM元素
+        const flashcard = document.getElementById('flashcard');
+        const wordFront = document.getElementById('wordFront');
+        const wordBack = document.getElementById('wordBack');
+        const meaning = document.getElementById('meaning');
+        const example = document.getElementById('example');
+        const pronunciation = document.getElementById('pronunciation');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const starBtn = document.getElementById('starBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const totalWordsBtn = document.getElementById('totalWordsBtn');
+        const learnedWordsBtn = document.getElementById('learnedWordsBtn');
+        const unlearnedWordsBtn = document.getElementById('unlearnedWordsBtn');
+        const starredWordsBtn = document.getElementById('starredWordsBtn');
+        const progressBar = document.getElementById('progressBar');
+        const totalWordsEl = document.getElementById('totalWordsBtn');
+        const learnedWordsEl = document.getElementById('learnedWordsBtn');
+        const starredWordsEl = document.getElementById('starredWordsBtn');
+        const quizContainer = document.getElementById('quiz-tab');
+        const spellingContainer = document.getElementById('spelling-tab');
+        const quizPrompt = document.getElementById('quizPrompt');
+        const quizHint = document.getElementById('quizHint');
+        const quizOptions = document.getElementById('quizOptions');
+        const quizFeedback = document.getElementById('quizFeedback');
+        const quizProgress = document.getElementById('quizProgress');
+        const spellingPrompt = document.getElementById('spellingPrompt');
+        const spellingHint = document.getElementById('spellingHint');
+        const spellingLines = document.getElementById('spellingLines');
+        const spellingFeedback = document.getElementById('spellingFeedback');
+        const spellingProgress = document.getElementById('spellingProgress');
+        const quizModal = document.getElementById('quizModal');
+        const startQuizBtn = document.getElementById('startQuiz');
+        const skipQuizBtn = document.getElementById('skipQuiz');
+        const spellingModal = document.getElementById('spellingModal');
+        const startSpellingBtn = document.getElementById('startSpelling');
+        const skipSpellingBtn = document.getElementById('skipSpelling');
+        const resultsModal = document.getElementById('resultsModal');
+        const resultsMessage = document.getElementById('resultsMessage');
+        const missedWordsContainer = document.getElementById('missedWordsContainer');
+        const reviewMissedBtn = document.getElementById('reviewMissed');
+        const returnToCardsBtn = document.getElementById('returnToCards');
+        const wordListTab = document.getElementById('wordlist-tab');
+        const flashcardTab = document.getElementById('flashcard-tab');
+        const wordListTitle = document.getElementById('wordlistTitle');
+        const wordListItems = document.getElementById('wordListItems');
+        const tabs = document.querySelectorAll('.tab');
+
+        // 初始化
+        function init() {
+
+            if (state.learnedWords.length > 0) {
+                state.currentIndex = state.learnedWords[0];
+                state.history = [...state.learnedWords];
+                state.historyIndex = state.history.length - 1;
+            }
+            updateStats();
+            showRandomUnlearnedWord();
+            
+            // 事件监听
+            flashcard.addEventListener('click', flipCard);
+            nextBtn.addEventListener('click', showRandomUnlearnedWord);
+            prevBtn.addEventListener('click', showPreviousWord);
+            starBtn.addEventListener('click', toggleStar);
+            resetBtn.addEventListener('click', resetLearning);
+            totalWordsBtn.addEventListener('click', () => showWordList('all'));
+            learnedWordsBtn.addEventListener('click', () => showWordList('learned'));
+            unlearnedWordsBtn.addEventListener('click', () => showWordList('unlearned'));
+            starredWordsBtn.addEventListener('click', () => showWordList('starred'));
+            startQuizBtn.addEventListener('click', startQuiz);
+            skipQuizBtn.addEventListener('click', skipQuiz);
+            startSpellingBtn.addEventListener('click', startSpelling);
+            skipSpellingBtn.addEventListener('click', skipSpelling);
+            reviewMissedBtn.addEventListener('click', reviewMissedWords);
+            returnToCardsBtn.addEventListener('click', returnToCards);
+            document.getElementById('resetAllBtn').addEventListener('click', resetAllProgress);
+            skipQuizBtn.addEventListener('click', skipQuiz);
+            // 键盘事件
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // 标签切换
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    toggleTab(tabName);
+                });
+            });
+        }
+
+        // 显示上一个单词
+        function showPreviousWord() {
+            if (state.history.length === 0 || state.historyIndex <= 0) {
+                alert("已经是第一个单词了");
+                return;
+            }
+            
+            state.historyIndex--;
+            state.currentIndex = state.history[state.historyIndex];
+            displayCurrentWord();
+        }
+
+        // 显示随机未学习单词
+        // 修改后的showRandomUnlearnedWord函数
+        function showRandomUnlearnedWord() {
+            if (wordData.length === 0) return;
+            
+            // 如果当前单词未被学习，先标记为已学习
+            if (!state.learnedWords.includes(state.currentIndex)) {
+                state.learnedWords.push(state.currentIndex);
+                localStorage.setItem('learnedWords', JSON.stringify(state.learnedWords));
+                updateStats();
+            }
+            
+            // 获取所有未学习单词的索引
+            const unlearnedIndices = [];
+            for (let i = 0; i < wordData.length; i++) {
+                if (!state.learnedWords.includes(i)) {
+                    unlearnedIndices.push(i);
+                }
+            }
+            
+            if (unlearnedIndices.length === 0) {
+                alert("恭喜！你已经学完了所有单词！");
+                return;
+            }
+            
+            let randomIndex;
+            do {
+                const randomPos = Math.floor(Math.random() * unlearnedIndices.length);
+                randomIndex = unlearnedIndices[randomPos];
+            } while (randomIndex === state.currentIndex && unlearnedIndices.length > 1);
+            
+            state.currentIndex = randomIndex;
+            
+            // 记录历史
+            state.history.push(randomIndex);
+            state.historyIndex = state.history.length - 1;
+            
+            // 限制历史记录大小
+            if (state.history.length > 50) {
+                state.history.shift();
+                state.historyIndex--;
+            }
+            
+            displayCurrentWord();
+            
+            // 确保卡片显示正面
+            if (flashcard.classList.contains('flipped')) {
+                flashcard.classList.remove('flipped');
+            }
+        }
+
+        // 显示当前单词
+        function displayCurrentWord() {
+            const currentWord = wordData[state.currentIndex];
+            
+            wordFront.textContent = currentWord.word;
+            wordBack.textContent = currentWord.word;
+            meaning.textContent = currentWord.meaning;
+            example.textContent = currentWord.example;
+            pronunciation.textContent = currentWord.pronunciation;
+            
+            // 更新收藏按钮状态
+            starBtn.classList.toggle('starred', state.starredWords.includes(state.currentIndex));
+        }
+
+        // 翻转卡片
+        function flipCard() {
+            flashcard.classList.toggle('flipped');
+            
+            // 标记为已学习
+            if (!state.learnedWords.includes(state.currentIndex)) {
+                state.learnedWords.push(state.currentIndex);
+                localStorage.setItem('learnedWords', JSON.stringify(state.learnedWords));
+                updateStats();
+            }
+        }
+
+        // 切换收藏
+        function toggleStar() {
+            const index = state.currentIndex;
+            const starIndex = state.starredWords.indexOf(index);
+            
+            if (starIndex === -1) {
+                state.starredWords.push(index);
+                starBtn.classList.add('starred');
+            } else {
+                state.starredWords.splice(starIndex, 1);
+                starBtn.classList.remove('starred');
+            }
+            
+            localStorage.setItem('starredWords', JSON.stringify(state.starredWords));
+            updateStats();
+            
+            // 如果当前在收藏列表，更新显示
+            if (state.currentWordListType === 'starred') {
+                renderWordList();
+            }
+        }
+
+        // 重置学习状态
+        function resetLearning(index) {
+            const learnedIndex = state.learnedWords.indexOf(index);
+            
+            if (learnedIndex !== -1) {
+                state.learnedWords.splice(learnedIndex, 1);
+                localStorage.setItem('learnedWords', JSON.stringify(state.learnedWords));
+                
+                // 从历史记录中也移除
+                const historyIndex = state.history.indexOf(index);
+                if (historyIndex !== -1) {
+                    state.history.splice(historyIndex, 1);
+                    state.historyIndex = Math.min(state.historyIndex, state.history.length - 1);
+                }
+                
+                updateStats();
+                
+                // 如果当前显示的就是被重置的单词，跳转到新的单词
+                if (state.currentIndex === index) {
+                    showRandomUnlearnedWord();
+                }
+                
+                // 刷新列表显示
+                if (state.currentWordListType === 'learned' || state.currentWordListType === 'unlearned') {
+                    renderWordList();
+                }
+            }
+        }
+
+        // 添加全局重置函数
+        function resetAllProgress() {
+            if (confirm("确定要重置所有学习进度吗？这将清除所有已学习和收藏记录！")) {
+                state.learnedWords = [];
+                state.starredWords = [];
+                state.history = [];
+                state.historyIndex = -1;
+                
+                localStorage.setItem('learnedWords', JSON.stringify([]));
+                localStorage.setItem('starredWords', JSON.stringify([]));
+                
+                updateStats();
+                
+                // 重新初始化显示
+                if (state.currentWordListType === 'learned' || state.currentWordListType === 'starred') {
+                    showWordList('all');
+                }
+                
+                // 重置当前显示
+                state.currentIndex = 0;
+                displayCurrentWord();
+            }
+        }
+        // 更新统计信息
+        function updateStats() {
+            const total = wordData.length;
+            const learned = state.learnedWords.length;
+            const unlearned = total - learned;
+            const starred = state.starredWords.length;
+            
+            totalWordsEl.textContent = `总单词: ${total}`;
+            learnedWordsEl.textContent = `已学习: ${learned}`;
+            unlearnedWordsBtn.textContent = `未学习: ${unlearned}`;
+            starredWordsEl.textContent = `收藏: ${starred}`;
+            
+            // 更新进度条
+            const progress = (learned / total) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 显示单词列表
+        function showWordList(type) {
+            state.currentWordListType = type;
+            
+            // 更新标题
+            switch(type) {
+                case 'all':
+                    wordListTitle.textContent = "所有单词";
+                    break;
+                case 'learned':
+                    wordListTitle.textContent = "已学习单词";
+                    break;
+                case 'unlearned':
+                    wordListTitle.textContent = "未学习单词";
+                    break;
+                case 'starred':
+                    wordListTitle.textContent = "收藏单词";
+                    break;
+            }
+            
+            // 渲染列表
+            renderWordList();
+            
+            // 显示列表
+            toggleTab('wordlist');
+        }
+
+        // 渲染单词列表
+        function renderWordList() {
+            wordListItems.innerHTML = '';
+            
+            let indices = [];
+            switch(state.currentWordListType) {
+                case 'all':
+                    indices = Array.from({length: wordData.length}, (_, i) => i);
+                    break;
+                case 'learned':
+                    indices = [...state.learnedWords];
+                    break;
+                case 'unlearned':
+                    for (let i = 0; i < wordData.length; i++) {
+                        if (!state.learnedWords.includes(i)) {
+                            indices.push(i);
+                        }
+                    }
+                    break;
+                case 'starred':
+                    indices = [...state.starredWords];
+                    break;
+            }
+
+            if (!Array.isArray(indices) || indices.some(isNaN)) {
+                console.error("Invalid indices:", indices);
+                indices = [];
+            }
+            
+            indices.forEach(index => {
+                const wordObj = wordData[index];
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                
+                if (state.starredWords.includes(index)) {
+                    const star = document.createElement('span');
+                    star.className = 'star';
+                    star.textContent = '★ ';
+                    wordItem.appendChild(star);
+                }
+                
+                const wordText = document.createElement('span');
+                wordText.textContent = `${wordObj.word} - ${wordObj.meaning}`;
+                wordItem.appendChild(wordText);
+                
+                // 如果是已学习单词，添加重置按钮
+                if (state.learnedWords.includes(index)) {
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'reset-btn';
+                    resetBtn.textContent = '↺';
+                    resetBtn.style.marginLeft = '8px';
+                    resetBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const learnedIndex = state.learnedWords.indexOf(index);
+                        if (learnedIndex !== -1) {
+                            state.learnedWords.splice(learnedIndex, 1);
+                            localStorage.setItem('learnedWords', JSON.stringify(state.learnedWords));
+                            updateStats();
+                            renderWordList();
+                        }
+                    });
+                    wordItem.appendChild(resetBtn);
+                }
+                
+                wordItem.addEventListener('click', () => {
+                    state.currentIndex = index;
+                    state.history.push(index);
+                    state.historyIndex = state.history.length - 1;
+                    displayCurrentWord();
+                    toggleTab('flashcard');
+                });
+                
+                wordListItems.appendChild(wordItem);
+            });
+        }
+
+        // 检查是否准备好选择题练习
+        function checkQuizReady() {
+            prepareQuiz();
+            quizModal.style.display = 'flex';
+        }
+        
+
+        // 准备选择题练习
+        function checkSpellingReady() {
+            prepareSpelling(); // 直接准备拼写练习
+            spellingModal.style.display = 'flex'; // 显示拼写模态框
+        }
+
+        // 开始选择题练习
+        function startQuiz() {
+            quizModal.style.display = 'none';
+            state.quizMode = true;
+            flashcardTab.style.display = 'none';
+            quizContainer.style.display = 'block';
+            wordListTab.style.display = 'none';
+            
+            displayQuizQuestion();
+        }
+
+        // 跳过选择题练习
+        function skipQuiz() {
+            quizModal.style.display = 'none';
+            toggleTab('flashcard'); // 添加这行，返回卡片学习
+        }
+
+        function skipSpelling() {
+            spellingModal.style.display = 'none';
+            toggleTab('flashcard'); // 返回卡片学习
+        }
+
+        // 显示选择题问题
+        function displayQuizQuestion() {
+            if (state.currentQuizIndex >= state.quizWords.length) {
+                showQuizResults();
+                return;
+            }
+            
+            const wordIndex = state.quizWords[state.currentQuizIndex];
+            const wordObj = wordData[wordIndex];
+            
+            quizPrompt.textContent = `请选择正确的释义 (${state.currentQuizIndex + 1}/${state.quizWords.length}):`;
+            quizHint.textContent = `${wordObj.word} ${wordObj.pronunciation}`;
+            
+            // 生成选项 (1个正确答案 + 3个随机错误答案)
+            const options = [wordObj.meaning];
+            
+            // 获取3个不同的错误选项
+            while (options.length < 4) {
+                const randomIndex = Math.floor(Math.random() * wordData.length);
+                const randomMeaning = wordData[randomIndex].meaning;
+                
+                if (!options.includes(randomMeaning) && randomMeaning !== wordObj.meaning) {
+                    options.push(randomMeaning);
+                }
+            }
+            
+            // 打乱选项顺序
+            options.sort(() => Math.random() - 0.5);
+            state.quizOptions = options;
+            
+            // 显示选项
+            quizOptions.innerHTML = '';
+            options.forEach((option, i) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => checkQuizAnswer(option, wordObj.meaning));
+                quizOptions.appendChild(optionElement);
+            });
+            
+            quizFeedback.textContent = '';
+            quizFeedback.className = 'quiz-feedback';
+            
+            quizProgress.textContent = `进度: ${state.currentQuizIndex}/${state.quizWords.length}`;
+        }
+
+        // 检查选择题答案
+        function checkQuizAnswer(selectedOption, correctAnswer) {
+            const optionElements = document.querySelectorAll('.quiz-option');
+            const currentWordIndex = state.quizWords[state.currentQuizIndex];
+            const wordObj = wordData[currentWordIndex];
+            
+            // 禁用所有选项，防止重复点击
+            optionElements.forEach(el => {
+                el.style.pointerEvents = 'none';
+            });
+            
+            if (selectedOption === correctAnswer) {
+                // 回答正确
+                optionElements.forEach(el => {
+                    if (el.textContent === correctAnswer) {
+                        el.classList.add('correct');
+                    }
+                });
+                
+                quizFeedback.textContent = '正确!';
+                quizFeedback.className = 'quiz-feedback correct';
+                
+                // 延迟后显示下一题
+                setTimeout(() => {
+                    state.currentQuizIndex++;
+                    displayQuizQuestion();
+                }, 1000);
+            } else {
+                // 回答错误
+                optionElements.forEach(el => {
+                    if (el.textContent === correctAnswer) {
+                        el.classList.add('correct');
+                    }
+                    if (el.textContent === selectedOption) {
+                        el.classList.add('incorrect');
+                    }
+                });
+                
+                quizFeedback.textContent = '不正确，请再试一次';
+                quizFeedback.className = 'quiz-feedback incorrect';
+                
+                // 记录错误单词
+                if (!state.missedQuizWords.includes(currentWordIndex)) {
+                    state.missedQuizWords.push(currentWordIndex);
+                }
+                
+                // 1秒后重新生成选项
+                setTimeout(() => {
+                    // 生成新的选项（包含正确答案和3个随机错误答案）
+                    const options = [wordObj.meaning];
+                    while (options.length < 4) {
+                        const randomIndex = Math.floor(Math.random() * wordData.length);
+                        const randomMeaning = wordData[randomIndex].meaning;
+                        if (!options.includes(randomMeaning) && randomMeaning !== wordObj.meaning) {
+                            options.push(randomMeaning);
+                        }
+                    }
+                    options.sort(() => Math.random() - 0.5);
+                    
+                    // 更新选项显示
+                    quizOptions.innerHTML = '';
+                    options.forEach((option, i) => {
+                        const optionElement = document.createElement('div');
+                        optionElement.className = 'quiz-option';
+                        optionElement.textContent = option;
+                        optionElement.addEventListener('click', () => checkQuizAnswer(option, wordObj.meaning));
+                        quizOptions.appendChild(optionElement);
+                    });
+                    
+                    quizFeedback.textContent = ''; // 清空反馈
+                }, 1000);
+            }
+        }
+
+        // 显示选择题结果
+        function showQuizResults() {
+            // 不要在这里设置quizMode为false，保持原状态
+            quizContainer.style.display = 'none';
+            
+            const totalQuestions = state.quizWords.length;
+            const correctAnswers = totalQuestions - state.missedQuizWords.length;
+            
+            resultsMessage.textContent = `您完成了选择题练习! 正确率: ${correctAnswers}/${totalQuestions}`;
+            
+            // 显示答错的单词
+            missedWordsContainer.innerHTML = '';
+            if (state.missedQuizWords.length > 0) {
+                const missedTitle = document.createElement('h3');
+                missedTitle.textContent = '答错的单词:';
+                missedWordsContainer.appendChild(missedTitle);
+                
+                const missedList = document.createElement('div');
+                missedList.className = 'word-list-items';
+                
+                state.missedQuizWords.forEach(index => {
+                    const wordObj = wordData[index];
+                    const wordItem = document.createElement('div');
+                    wordItem.className = 'word-item';
+                    wordItem.textContent = `${wordObj.word} - ${wordObj.meaning}`;
+                    missedList.appendChild(wordItem);
+                });
+                
+                missedWordsContainer.appendChild(missedList);
+            }
+            
+            // 根据是否有错词决定显示复习按钮
+            reviewMissedBtn.style.display = state.missedQuizWords.length > 0 ? 'block' : 'none';
+            
+            resultsModal.style.display = 'flex';
+        }
+        
+
+
+
+        // 准备拼写练习
+        function prepareQuiz() {
+            // 创建包含所有单词的数组
+            const allWords = Array.from({length: wordData.length}, (_, i) => i);
+            
+            // 优先使用已学单词
+            const learnedWords = [...state.learnedWords];
+            // 未学单词
+            const unlearnedWords = allWords.filter(i => !state.learnedWords.includes(i));
+            
+            // 合并数组，已学单词在前
+            const wordPool = [...learnedWords, ...unlearnedWords];
+            
+            // 随机选择最多20个单词（或全部单词如果不足20个）
+            state.quizWords = [];
+            const maxWords = Math.min(20, wordPool.length);
+            
+            // 复制数组以避免修改原数组
+            const tempPool = [...wordPool];
+            
+            for (let i = 0; i < maxWords; i++) {
+                const randomIndex = Math.floor(Math.random() * tempPool.length);
+                const wordIndex = tempPool.splice(randomIndex, 1)[0];
+                state.quizWords.push(wordIndex);
+            }
+            
+            state.currentQuizIndex = 0;
+            state.missedQuizWords = [];
+        }
+
+        function prepareSpelling() {
+            // 创建包含所有单词的数组
+            const allWords = Array.from({length: wordData.length}, (_, i) => i);
+            
+            // 优先使用已学单词
+            const learnedWords = [...state.learnedWords];
+            // 未学单词
+            const unlearnedWords = allWords.filter(i => !state.learnedWords.includes(i));
+            
+            // 合并数组，已学单词在前
+            const wordPool = [...learnedWords, ...unlearnedWords];
+            
+            // 随机选择最多20个单词（或全部单词如果不足20个）
+            state.spellingWords = [];
+            const maxWords = Math.min(20, wordPool.length);
+            
+            // 复制数组以避免修改原数组
+            const tempPool = [...wordPool];
+            
+            for (let i = 0; i < maxWords; i++) {
+                const randomIndex = Math.floor(Math.random() * tempPool.length);
+                const wordIndex = tempPool.splice(randomIndex, 1)[0];
+                state.spellingWords.push(wordIndex);
+            }
+            
+            state.currentSpellingIndex = 0;
+            state.missedSpellingWords = [];
+        }
+
+
+        // 开始拼写练习
+        function startSpelling() {
+            spellingModal.style.display = 'none';
+            state.spellingMode = true;
+            flashcardTab.style.display = 'none';
+            spellingContainer.style.display = 'block';
+            wordListTab.style.display = 'none';
+            
+            displaySpellingWord();
+            keepKeyboardOpen(); 
+        }
+
+
+        // 显示拼写单词
+        function displaySpellingWord() {
+            if (state.currentSpellingIndex >= state.spellingWords.length) {
+                showSpellingResults();
+                return;
+            }
+            
+            // 重置显示状态
+            state.showingCorrectSpelling = false;
+            spellingFeedback.textContent = '';
+            spellingFeedback.className = 'spelling-feedback';
+        
+            const wordIndex = state.spellingWords[state.currentSpellingIndex];
+            const wordObj = wordData[wordIndex];
+            
+            spellingPrompt.textContent = `请拼写单词 (${state.currentSpellingIndex + 1}/${state.spellingWords.length}):`;
+            spellingHint.textContent = `${wordObj.meaning} (${wordObj.pronunciation})`.toLowerCase();
+            
+            // 清空之前的输入
+            state.spellingInput = [];
+            state.spellingPositions = [];
+            
+            // 创建字母线
+            spellingLines.innerHTML = '';
+            
+            // 确保隐藏输入框存在
+            let hiddenInput = document.getElementById('spellingHiddenInput');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'text';
+                hiddenInput.style.position = 'absolute';
+                hiddenInput.style.opacity = '0';
+                hiddenInput.style.height = '0';
+                hiddenInput.style.width = '0';
+                hiddenInput.style.padding = '0';
+                hiddenInput.style.border = 'none';
+                hiddenInput.id = 'spellingHiddenInput';
+                spellingLines.appendChild(hiddenInput);
+                
+                // 添加事件监听器
+                hiddenInput.addEventListener('input', (e) => {
+                    const key = e.data ? e.data.toLowerCase() : '';
+                    if (key && key.length === 1 && key >= 'a' && key <= 'z') {
+                        processSpellingInput(key);
+                    }
+                    hiddenInput.value = '';
+                });
+                
+                hiddenInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace') {
+                        if (state.spellingInput.length > 0) {
+                            state.spellingInput.pop();
+                            updateSpellingDisplay();
+                        }
+                        e.preventDefault();
+                    } else if (e.key === 'Enter') {
+                        checkSpelling();
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            for (let i = 0; i < wordObj.word.length; i++) {
+                if (wordObj.word[i] === ' ') {
+                    const space = document.createElement('div');
+                    space.style.width = '20px';
+                    space.style.display = 'inline-block';
+                    spellingLines.appendChild(space);
+                } else {
+                    const line = document.createElement('div');
+                    line.className = 'letter-line';
+                    line.setAttribute('data-letter', wordObj.word[i].toLowerCase());
+                    
+                    if (isMobileDevice()) {
+                        line.style.cursor = 'pointer';
+                        line.addEventListener('click', () => {
+                            const input = document.getElementById('spellingHiddenInput');
+                            if (input) input.focus();
+                        });
+                    }
+                    
+                    spellingLines.appendChild(line);
+                    state.spellingPositions.push(i);
+                }
+            }
+            
+            spellingProgress.textContent = `进度: ${state.currentSpellingIndex}/${state.spellingWords.length}`;
+            
+            // 每次显示新单词时都聚焦输入框（但延迟执行以避免iOS的自动收起问题）
+            if (isMobileDevice()) {
+                setTimeout(() => {
+                    const input = document.getElementById('spellingHiddenInput');
+                    if (input) {
+                        input.focus();
+                        // 防止iOS自动收起键盘的小技巧
+                        setTimeout(() => input.focus(), 100);
+                    }
+                }, 300);
+            }
+        }
+
+        // 处理键盘输入
+        function handleKeyDown(e) {
+            // 如果是移动设备且处于拼写模式，则不处理键盘事件
+            if (isMobileDevice() && state.spellingMode) return;
+            
+            if (state.spellingMode) {
+                handleSpellingKeyDown(e);
+            } else if (state.quizMode) {
+                // 可以添加选择题的键盘控制
+            }
+        }
+
+        function handleSpellingKeyDown(e) {
+            // 如果正在显示正确答案，则隐藏它
+            if (state.showingCorrectSpelling) {
+                spellingFeedback.textContent = '';
+                state.showingCorrectSpelling = false;
+                return; // 不处理这次按键
+            }
+            
+            const key = e.key.toLowerCase(); // 改为小写
+            
+            // 只处理字母键
+            if (key.length === 1 && key >= 'a' && key <= 'z') { // 检查小写字母
+                processSpellingInput(key);
+            } else if (e.key === 'Backspace') {
+                // 处理退格键
+                if (state.spellingInput.length > 0) {
+                    state.spellingInput.pop();
+                    updateSpellingDisplay();
+                }
+            } else if (e.key === 'Enter') {
+                // 处理回车键 - 提交答案
+                checkSpelling();
+            }
+        }
+
+        // 处理拼写输入
+        function processSpellingInput(key) {
+            // 当用户开始输入新字符时清除错误提示
+            if (state.showingCorrectSpelling) {
+                resetSpellingFeedback();
+            }
+            
+            if (key.length === 1 && key >= 'a' && key <= 'z') {
+                if (state.spellingInput.length < state.spellingPositions.length) {
+                    state.spellingInput.push(key);
+                    updateSpellingDisplay();
+                    
+                    if (state.spellingInput.length === state.spellingPositions.length) {
+                        setTimeout(checkSpelling, 500);
+                    }
+                }
+            }
+        }
+        // 更新拼写显示
+        function updateSpellingDisplay() {
+            const letterLines = document.querySelectorAll('.letter-line');
+            
+            letterLines.forEach((line, index) => {
+                if (index < state.spellingInput.length) {
+                    line.classList.add('show-letter');
+                    line.setAttribute('data-letter', state.spellingInput[index].toLowerCase());
+                } else {
+                    line.classList.remove('show-letter');
+                }
+            });
+        }
+
+        // 检查拼写
+        function checkSpelling() {
+            const wordIndex = state.spellingWords[state.currentSpellingIndex];
+            const wordObj = wordData[wordIndex];
+            const correctWordWithoutSpaces = wordObj.word.replace(/\s/g, '').toLowerCase();
+            const userInput = state.spellingInput.join('').toLowerCase();
+            
+            if (userInput === correctWordWithoutSpaces) {
+                spellingFeedback.textContent = '正确!';
+                spellingFeedback.className = 'spelling-feedback correct';
+                
+                // 正确时保持键盘打开
+                if (isMobileDevice()) {
+                    const input = document.getElementById('spellingHiddenInput');
+                    if (input) input.focus();
+                }
+                
+                setTimeout(() => {
+                    spellingFeedback.textContent = '';
+                    state.currentSpellingIndex++;
+                    displaySpellingWord();
+                }, 1000);
+            } else {
+                spellingFeedback.textContent = `不正确，正确答案是: ${wordObj.word}`;
+                spellingFeedback.className = 'spelling-feedback incorrect';
+                state.showingCorrectSpelling = true;
+                
+                if (!state.missedSpellingWords.includes(wordIndex)) {
+                    state.missedSpellingWords.push(wordIndex);
+                }
+                
+                state.spellingInput = [];
+                updateSpellingDisplay();
+                
+                // 错误时也保持键盘打开
+                if (isMobileDevice()) {
+                    setTimeout(() => {
+                        const input = document.getElementById('spellingHiddenInput');
+                        if (input) input.focus();
+                    }, 100);
+                }
+            }
+        }
+
+        // 保持键盘显示的辅助函数
+        function keepKeyboardOpen() {
+            if (!isMobileDevice()) return;
+            
+            const input = document.getElementById('spellingHiddenInput');
+            if (input) {
+                // 每500毫秒检查一次，确保键盘保持打开
+                const keepAliveInterval = setInterval(() => {
+                    if (!state.spellingMode) {
+                        clearInterval(keepAliveInterval);
+                        return;
+                    }
+                    input.focus();
+                }, 500);
+                
+                // 当离开拼写模式时清除定时器
+                window.addEventListener('blur', () => {
+                    clearInterval(keepAliveInterval);
+                }, { once: true });
+            }
+        }
+
+        function resetSpellingFeedback() {
+            spellingFeedback.textContent = '';
+            spellingFeedback.className = 'spelling-feedback';
+            state.showingCorrectSpelling = false;
+        }
+        // 显示拼写结果
+        function showSpellingResults() {
+            state.spellingMode = false;
+            spellingContainer.style.display = 'none';
+            
+            const totalWords = state.spellingWords.length;
+            const correctWords = totalWords - state.missedSpellingWords.length;
+            
+            resultsMessage.textContent = `您完成了拼写练习! 正确率: ${correctWords}/${totalWords}`;
+            
+            // 显示拼错的单词
+            missedWordsContainer.innerHTML = '';
+            if (state.missedSpellingWords.length > 0) {
+                const missedTitle = document.createElement('h3');
+                missedTitle.textContent = '拼错的单词:';
+                missedWordsContainer.appendChild(missedTitle);
+                
+                const missedList = document.createElement('div');
+                missedList.className = 'word-list-items';
+                
+                state.missedSpellingWords.forEach(index => {
+                    const wordObj = wordData[index];
+                    const wordItem = document.createElement('div');
+                    wordItem.className = 'word-item';
+                    wordItem.textContent = `${wordObj.word} - ${wordObj.meaning}`;
+                    missedList.appendChild(wordItem);
+                });
+                
+                missedWordsContainer.appendChild(missedList);
+            }
+            
+            resultsModal.style.display = 'flex';
+        }
+
+        // 复习错词
+        function reviewMissedWords() {
+            resultsModal.style.display = 'none';
+            
+            if (state.quizMode) {
+                // 复习选择题错词
+                if (state.missedQuizWords.length > 0) {
+                    state.quizWords = [...state.missedQuizWords];
+                    state.currentQuizIndex = 0;
+                    state.missedQuizWords = [];
+                    state.quizMode = true;  // 保持quizMode为true
+                    
+                    quizContainer.style.display = 'block';
+                    displayQuizQuestion();
+                } else {
+                    alert("没有需要复习的错词！");
+                    returnToCards();
+                }
+            } else {
+                // 复习拼写错词
+                if (state.missedSpellingWords.length > 0) {
+                    state.spellingWords = [...state.missedSpellingWords];
+                    state.currentSpellingIndex = 0;
+                    state.missedSpellingWords = [];
+                    state.spellingMode = true;  // 保持spellingMode为true
+                    
+                    spellingContainer.style.display = 'block';
+                    displaySpellingWord();
+                } else {
+                    alert("没有需要复习的错词！");
+                    returnToCards();
+                }
+            }
+        }
+
+        // 返回卡片学习
+        function returnToCards() {
+            resultsModal.style.display = 'none';
+            flashcardTab.style.display = 'block';
+            showRandomUnlearnedWord();
+        }
+
+        // 切换标签
+        function toggleTab(tabName) {
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // 隐藏所有内容
+            flashcardTab.style.display = 'none';
+            quizContainer.style.display = 'none';
+            spellingContainer.style.display = 'none';
+            wordListTab.style.display = 'none';
+            
+            // 显示选中的内容
+            if (tabName === 'flashcard') {
+                flashcardTab.style.display = 'block';
+            } else if (tabName === 'quiz') {
+                checkQuizReady();
+            } else if (tabName === 'spelling') {
+                checkSpellingReady();
+            } else if (tabName === 'wordlist') {
+                wordListTab.style.display = 'block';
+            }
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+@media (max-width: 600px) {
+    .letter-line {
+        margin-bottom: 40px !important; /* 增加下边距，使点击区域更大 */
+    }
+}
+
+@media (max-width: 600px) {
+    .word {
+        font-size: 1.8rem;
+    }
+    
+    .meaning, .example {
+        font-size: 0.9rem;
+    }
+    
+    .flashcard-container {
+        height: 380px;
+    }
+    
+    button {
+        padding: 8px 15px;
+        font-size: 0.8rem;
+    }
+    
+    .quiz-options {
+        grid-template-columns: 1fr;
+    }
+}
